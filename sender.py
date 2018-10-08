@@ -19,22 +19,22 @@ def main():
         sys.exit('Usage: python sender.py receiver_host_ip receiver_port file.pdf MWS MSS gamma pDrop pDuplicate pCorrupt pOrder maxOrder pDelay maxDelay seed')
     else:
         host_ip = arguments[0]
-        port = arguments[0]
-        file_name = arguments[0]
-        max_windows_size = arguments[0]
-        min_segment_size = arguments[0]
+        port = arguments[1]
+        file_name = arguments[2]
+        max_windows_size = arguments[3]
+        min_segment_size = arguments[4]
         # for calculation of timeout value
-        gamma = arguments[0]
+        gamma = arguments[5]
 
         # From here, they are only used by the PLD module
-        pDrop = arguments[0]
-        pDup = arguments[0]
-        pCorrupt = arguments[0]
-        pOrder = arguments[0]
-        maxOrder = arguments[0]
-        pDelay = arguments[0]
-        maxDelay = arguments[0]
-        seed = arguments[0]
+        pDrop = arguments[6]
+        pDup = arguments[7]
+        pCorrupt = arguments[8]
+        pOrder = arguments[9]
+        maxOrder = arguments[10]
+        pDelay = arguments[11]
+        maxDelay = arguments[12]
+        seed = arguments[13]
 
 # dont forget to run the function
 main()
