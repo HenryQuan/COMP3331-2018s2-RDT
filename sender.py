@@ -35,3 +35,6 @@ def main():
         pDelay = arguments[0]
         maxDelay = arguments[0]
         seed = arguments[0]
+
+# dont forget to run the function
+main()
