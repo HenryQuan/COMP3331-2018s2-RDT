@@ -9,6 +9,9 @@ def print(*args, **kwargs):
     if DEBUG_MODE:
         nprint(*args, **kwargs)
 
+def log(message):
+    print('- {0} -\n{1}\n'.format(time_now(), message))
+
 # Fatal error
 def fatal(message):
     sys.exit(message)

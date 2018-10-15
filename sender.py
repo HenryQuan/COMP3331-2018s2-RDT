@@ -9,7 +9,7 @@ from packet import *
 def main():
     # get a list of arguments, there are should be 14 of them
     arguments = sys.argv[1:]
-    print (arguments)
+    print ('ARGV:', arguments, '\n')
     if (len(arguments) > 14):
         # 14 arguments are ... probably too many
         fatal('Usage: python sender.py receiver_host_ip receiver_port file.pdf MWS MSS gamma pDrop pDuplicate pCorrupt pOrder maxOrder pDelay maxDelay seed')
@@ -58,7 +58,7 @@ def main():
 def three_way_handshake(sender, host_ip, port):
     packet = new_packet()
     sender.sendto(bytes(packet), (host_ip, port))
-    print(time_now(), 'Handshake #1')
+    log('Handshake #1')
 
 # perform RDT
 def reliable_data_transfer():
