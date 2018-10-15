@@ -21,11 +21,14 @@ def main():
         # 14 arguments are ... probably too many
         sys.exit('Usage: python receiver.py receiver_port file_r.pdf')
     else:
-        receiver_port = arguments[0]
-        file_received = arguments[1]
+        port = int(arguments[0])
+        file = arguments[1]
 
-        client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        client.sendto("Hello World", (host_ip, receiver_port))
+        receiver = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        receiver.bind(('localhost', port))
+        while True:
+            data, sender = receiver.recvfrom(port)
+            print(data)
 
 # dont forget to run the function
 main()

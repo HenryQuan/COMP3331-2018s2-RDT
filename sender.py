@@ -19,8 +19,8 @@ def main():
         sys.exit('Usage: python sender.py receiver_host_ip receiver_port file.pdf MWS MSS gamma pDrop pDuplicate pCorrupt pOrder maxOrder pDelay maxDelay seed')
     else:
         host_ip = arguments[0]
-        port = arguments[1]
-        file_name = arguments[2]
+        port = int(arguments[1])
+        '''file_name = arguments[2]
         max_windows_size = arguments[3]
         min_segment_size = arguments[4]
         # for calculation of timeout value
@@ -34,13 +34,26 @@ def main():
         maxOrder = arguments[10]
         pDelay = arguments[11]
         maxDelay = arguments[12]
-        seed = arguments[13]
+        seed = arguments[13]'''
 
-        server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        server.bind((host_ip, port))
+        # setting up socket server
+        sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # update this to get proper timeout
+        # sender.settimeout(gamma)
         while True:
-            data, addr = serverSock.recvfrom(1024)
-            print("Message: ", data)
+            sender.sendto(b'Hello World', (host_ip, port))
 
-# dont forget to run the function
+# for connection establishment, NO PAYLOAD (data)
+def three_way_handshake():
+    return
+
+# perform RDT
+def reliable_data_transfer():
+    return
+
+# four-segment connection termination (FIN, ACK, FIN, ACK)
+def termination():
+    return
+
+# run everything
 main()
