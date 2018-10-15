@@ -13,10 +13,10 @@ CONNECTION_ESTABLISHED = 2
 TERMINATION = 3
 
 # current state for reveiver
-CURR_STATE = 0
+STATE = 0
 
 def main():
-    global CURR_STATE
+    global STATE
 
     # get a list of arguments, there are should be only 2 of them
     arguments = sys.argv[1:]
@@ -32,10 +32,10 @@ def main():
         receiver = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         receiver.bind((host, port))
         # Receiver is now started
-        CURR_STATE = SYSTEM_INIT
+        STATE = SYSTEM_INIT
 
         while True:
-            if (CURR_STATE == SYSTEM_INIT):
+            if (STATE == SYSTEM_INIT):
                 # do some setup if necessary
                 print('# Reveiver is initialised\n')
 
@@ -44,19 +44,30 @@ def main():
             log(data)
 
             # deal with different state
-            if (CURR_STATE == SYSTEM_INIT):
-                packet = new_packet()
-                receiver.sendto(bytes(packet), (host, port))
-                log('ACK #1')
+            if (STATE == SYSTEM_INIT):
+                # syn from sender for handshake
+                if (check_syn_flag(data)):
+                    log('! Handshake #1 - SYN received')
+                    packet = new_packet()
+                    set_syn_flag(packet)
+                    set_ack_flag(packet)
+                    # 0 is sender ip and 1 is sender port
+                    receiver.sendto(bytes(packet), (sender[0], sender[1]))
+                    log('! Handshake #2 - SYN-ACK sent')
 
-                # update state
-                print('# Three way handshake mode entered\n')
-                CURR_STATE = THREE_WAY_HANDSHAKE
-            elif (CURR_STATE == THREE_WAY_HANDSHAKE):
+                    # enter THREE_WAY_HANDSHAKE
+                    STATE = THREE_WAY_HANDSHAKE
+                    print('# Three way handshake mode entered\n')
+            elif (STATE == THREE_WAY_HANDSHAKE):
+                # for the final ack
+                if (check_ack_flag(data)):
+                    log('! Handshake #3 - ACK received')
+                    # enter CONNECTION_ESTABLISHED
+                    STATE = CONNECTION_ESTABLISHED
+                    print('# Connection is now established\n')
+            elif (STATE == CONNECTION_ESTABLISHED):
                 return
-            elif (CURR_STATE == CONNECTION_ESTABLISHED):
-                return
-            elif (CURR_STATE == TERMINATION):
+            elif (STATE == TERMINATION):
                 return
 
 

@@ -6,6 +6,10 @@ import socket
 from debug import *
 from packet import *
 
+
+# current state for sender
+STATE = 0
+
 def main():
     # get a list of arguments, there are should be 14 of them
     arguments = sys.argv[1:]
@@ -55,10 +59,24 @@ def main():
         print('Completed ^_^')
 
 # for connection establishment, NO PAYLOAD (data)
-def three_way_handshake(sender, host_ip, port):
+def three_way_handshake(s, ip, port):
     packet = new_packet()
-    sender.sendto(bytes(packet), (host_ip, port))
-    log('Handshake #1')
+    set_syn_flag(packet)
+    s.sendto(bytes(packet), (host_ip, port))
+    log('! Handshake #1 - SYN sent')
+
+    # check for response
+    response, sender = s.recvfrom(port)
+    if (check_syn_flag(response) and check_ack_flag(response)):
+        log('! Handshake #2 - SYN-ACK received')
+        packet = new_packet()
+        set_ack_flag(packet)
+        s.sendto(bytes(packet), (ip, port))
+        log('! Handshake #3 - ACK sent')
+        log('! Connection is established')
+    else:
+        log('! Handshake failure ' + response)
+        fatal('Error: failed to handshake')
 
 # perform RDT
 def reliable_data_transfer():
