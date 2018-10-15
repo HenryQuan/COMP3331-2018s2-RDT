@@ -10,7 +10,8 @@ from packet import *
 SYSTEM_INIT = 0
 THREE_WAY_HANDSHAKE = 1
 CONNECTION_ESTABLISHED = 2
-TERMINATION = 3
+FILE_TRANSFERRED = 3
+TERMINATION = 4
 
 # current state for sender
 STATE = 0
@@ -67,6 +68,9 @@ def main():
             # update this to get proper timeout
             # sender.settimeout(gamma)
 
+            # start data transfer
+            reliable_data_transfer(sender, host_ip, port, file_name)
+
             print('Completed ^_^')
         else:
             fatal(file_name + ' is not found')
@@ -95,8 +99,15 @@ def three_way_handshake(s, ip, port):
         fatal('Error: failed to handshake')
 
 # perform RDT
-def reliable_data_transfer():
-    return
+def reliable_data_transfer(s, ip, port, file):
+    global STATE
+
+    # read as binary
+    data = open(file, 'rb').read()
+    # keep sending data until file is transferred
+    while (STATE != FILE_TRANSFERRED):
+        s.sendto(bytes(data), (ip, port))
+
 
 # four-segment connection termination (FIN, ACK, FIN, ACK)
 def termination():

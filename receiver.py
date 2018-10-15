@@ -66,7 +66,10 @@ def main():
                     STATE = CONNECTION_ESTABLISHED
                     print('# Connection is now established\n')
             elif (STATE == CONNECTION_ESTABLISHED):
-                return
+                # write as binary
+                transferred = open(file, 'wb')
+                transferred.write(data)
+                transferred.close()
             elif (STATE == TERMINATION):
                 return
 
