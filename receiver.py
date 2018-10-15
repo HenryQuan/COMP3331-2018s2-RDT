@@ -6,7 +6,7 @@ import socket
 from debug import *
 from packet import *
 
-# receive should have multiple states
+# receiver states
 SYSTEM_INIT = 0
 THREE_WAY_HANDSHAKE = 1
 CONNECTION_ESTABLISHED = 2

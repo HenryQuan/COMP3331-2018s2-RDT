@@ -1,11 +1,16 @@
 '''
 
 '''
-import sys
+import sys, os
 import socket
 from debug import *
 from packet import *
 
+# sender states
+SYSTEM_INIT = 0
+THREE_WAY_HANDSHAKE = 1
+CONNECTION_ESTABLISHED = 2
+TERMINATION = 3
 
 # current state for sender
 STATE = 0
@@ -14,13 +19,13 @@ def main():
     # get a list of arguments, there are should be 14 of them
     arguments = sys.argv[1:]
     print ('ARGV:', arguments, '\n')
-    if (len(arguments) > 14):
+    if (len(arguments) != 14):
         # 14 arguments are ... probably too many
         fatal('Usage: python sender.py receiver_host_ip receiver_port file.pdf MWS MSS gamma pDrop pDuplicate pCorrupt pOrder maxOrder pDelay maxDelay seed')
     else:
         host_ip = arguments[0]
         port = int(arguments[1])
-        '''
+
         file_name = arguments[2]
         max_windows_size = arguments[3]
         min_segment_size = arguments[4]
@@ -28,41 +33,50 @@ def main():
         gamma = arguments[5]
 
         # From here, they are only used by the PLD module
-        pDrop = double(arguments[6])
-        if (pDrop < 0.0 && pDrop > 1.0) fatal('Invalid pDrop')
+        pDrop = float(arguments[6])
+        if (pDrop < 0.0 and pDrop > 1.0):
+            fatal('Invalid pDrop')
 
-        pDup = double(arguments[7])
-        if (pDrop < 0.0 && pDrop > 1.0) fatal('Invalid pDup')
+        pDup = float(arguments[7])
+        if (pDrop < 0.0 and pDrop > 1.0):
+            fatal('Invalid pDup')
 
-        pCorrupt = double(arguments[8])
-        if (pDrop < 0.0 && pDrop > 1.0) fatal('Invalid pCorrupt')
+        pCorrupt = float(arguments[8])
+        if (pDrop < 0.0 and pDrop > 1.0):
+            fatal('Invalid pCorrupt')
 
-        pOrder = double(arguments[9])
-        if (pDrop < 0.0 && pDrop > 1.0) fatal('Invalid pOrder')
+        pOrder = float(arguments[9])
+        if (pDrop < 0.0 and pDrop > 1.0):
+            fatal('Invalid pOrder')
 
         maxOrder = int(arguments[10])
-        if (pDrop < 0 && pDrop > 6) fatal('Invalid maxOrder')
+        if (pDrop < 0 and pDrop > 6):
+            fatal('Invalid maxOrder')
 
-        pDelay = double(arguments[11])
-        if (pDrop < 0.0 && pDrop > 1.0) fatal('Invalid pDelay')
+        pDelay = float(arguments[11])
+        if (pDrop < 0.0 and pDrop > 1.0):
+            fatal('Invalid pDelay')
 
         maxDelay = arguments[12]
         seed = arguments[13]
-        '''
 
-        # setting up socket server
-        sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        three_way_handshake(sender, host_ip, port)
-        # update this to get proper timeout
-        # sender.settimeout(gamma)
+        if (os.path.isfile(file_name)):
+            # setting up socket server
+            sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            three_way_handshake(sender, host_ip, port)
+            # update this to get proper timeout
+            # sender.settimeout(gamma)
 
-        print('Completed ^_^')
+            print('Completed ^_^')
+        else:
+            fatal(file_name + ' is not found')
 
 # for connection establishment, NO PAYLOAD (data)
 def three_way_handshake(s, ip, port):
+    global STATE
     packet = new_packet()
     set_syn_flag(packet)
-    s.sendto(bytes(packet), (host_ip, port))
+    s.sendto(bytes(packet), (ip, port))
     log('! Handshake #1 - SYN sent')
 
     # check for response
@@ -73,7 +87,9 @@ def three_way_handshake(s, ip, port):
         set_ack_flag(packet)
         s.sendto(bytes(packet), (ip, port))
         log('! Handshake #3 - ACK sent')
+        # Connection has been established
         log('! Connection is established')
+        STATE = CONNECTION_ESTABLISHED
     else:
         log('! Handshake failure ' + response)
         fatal('Error: failed to handshake')

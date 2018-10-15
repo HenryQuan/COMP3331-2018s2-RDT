@@ -25,6 +25,21 @@ def new_packet():
     return header
 
 '''
+Sequence number and acknowledgement
+'''
+def set_seq(packet, number):
+    packet[seq] = number
+
+def get_seq(packet):
+    return packet[seq]
+
+def set_ack(packet, number):
+    packet[ack] = number
+
+def get_ack(packet):
+    return packet[ack]
+
+'''
 Update and check for packet's flag
 '''
 def set_syn_flag(packet):
