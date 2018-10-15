@@ -1,14 +1,9 @@
+'''
+
+'''
 import sys
 import socket
-
-# for debugging only
-DEBUG_MODE = True
-
-# this is the normal print
-nprint = print
-def print(*args, **kwargs):
-    if DEBUG_MODE:
-        nprint(*args, **kwargs)
+from debug import *
 
 def main():
     # get a list of arguments, there are should be 14 of them
@@ -20,7 +15,8 @@ def main():
     else:
         host_ip = arguments[0]
         port = int(arguments[1])
-        '''file_name = arguments[2]
+        '''
+        file_name = arguments[2]
         max_windows_size = arguments[3]
         min_segment_size = arguments[4]
         # for calculation of timeout value
@@ -31,22 +27,23 @@ def main():
         if (pDrop < 0.0 && pDrop > 1.0) sys.exit('Invalid pDrop')
 
         pDup = double(arguments[7])
-        if (pDrop < 0.0 && pDrop > 1.0) sys.exit('Invalid pDrop')
+        if (pDrop < 0.0 && pDrop > 1.0) sys.exit('Invalid pDup')
 
         pCorrupt = double(arguments[8])
-        if (pDrop < 0.0 && pDrop > 1.0) sys.exit('Invalid pDrop')
+        if (pDrop < 0.0 && pDrop > 1.0) sys.exit('Invalid pCorrupt')
 
         pOrder = double(arguments[9])
-        if (pDrop < 0.0 && pDrop > 1.0) sys.exit('Invalid pDrop')
+        if (pDrop < 0.0 && pDrop > 1.0) sys.exit('Invalid pOrder')
 
         maxOrder = int(arguments[10])
-        if (pDrop < 0 && pDrop > 6) sys.exit('Invalid pDrop')
+        if (pDrop < 0 && pDrop > 6) sys.exit('Invalid maxOrder')
 
         pDelay = double(arguments[11])
-        if (pDrop < 0.0 && pDrop > 1.0) sys.exit('Invalid pDrop')
+        if (pDrop < 0.0 && pDrop > 1.0) sys.exit('Invalid pDelay')
 
         maxDelay = arguments[12]
-        seed = arguments[13]'''
+        seed = arguments[13]
+        '''
 
         # setting up socket server
         sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
