@@ -27,17 +27,30 @@ def main():
         gamma = arguments[5]
 
         # From here, they are only used by the PLD module
-        pDrop = arguments[6]
-        pDup = arguments[7]
-        pCorrupt = arguments[8]
-        pOrder = arguments[9]
-        maxOrder = arguments[10]
-        pDelay = arguments[11]
+        pDrop = double(arguments[6])
+        if (pDrop < 0.0 && pDrop > 1.0) sys.exit('Invalid pDrop')
+
+        pDup = double(arguments[7])
+        if (pDrop < 0.0 && pDrop > 1.0) sys.exit('Invalid pDrop')
+
+        pCorrupt = double(arguments[8])
+        if (pDrop < 0.0 && pDrop > 1.0) sys.exit('Invalid pDrop')
+
+        pOrder = double(arguments[9])
+        if (pDrop < 0.0 && pDrop > 1.0) sys.exit('Invalid pDrop')
+
+        maxOrder = int(arguments[10])
+        if (pDrop < 0 && pDrop > 6) sys.exit('Invalid pDrop')
+
+        pDelay = double(arguments[11])
+        if (pDrop < 0.0 && pDrop > 1.0) sys.exit('Invalid pDrop')
+
         maxDelay = arguments[12]
         seed = arguments[13]'''
 
         # setting up socket server
         sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        three_way_handshake()
         # update this to get proper timeout
         # sender.settimeout(gamma)
         while True:
