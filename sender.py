@@ -143,8 +143,10 @@ def cut_into_chunks(file, size):
         else:
             chunks.append(chunk)
 
+    total = 0
     for c in chunks:
-        print(len(c))
+        total += len(c)
+    print(total)
     return chunks
 
 # calculate estimated timeout
