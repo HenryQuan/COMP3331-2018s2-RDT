@@ -66,6 +66,8 @@ def main():
                     STATE = CONNECTION_ESTABLISHED
                     print('# Connection is now established\n')
             elif (STATE == CONNECTION_ESTABLISHED):
+                # check for get_checksum
+                print(calc_checksum(data))
                 # write as binary
                 transferred = open(file, 'wb')
                 transferred.write(data)

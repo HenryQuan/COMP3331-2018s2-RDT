@@ -105,8 +105,12 @@ def reliable_data_transfer(s, ip, port, file):
     # read as binary
     data = open(file, 'rb').read()
     # keep sending data until file is transferred
-    while (STATE != FILE_TRANSFERRED):
-        s.sendto(bytes(data), (ip, port))
+    #while (STATE != FILE_TRANSFERRED):
+    packet = new_packet()
+    set_data_flag(packet)
+    set_data(packet, data)
+    print(calc_checksum(data))
+    s.sendto(bytes(data), (ip, port))
 
 
 # four-segment connection termination (FIN, ACK, FIN, ACK)

@@ -2,11 +2,14 @@
 This is packet manager
 """
 
+import hashlib
+
 # index for header
 seq = 0
 ack_num = 1
 flag = 2
-data = 3
+checksum = 3
+data = 4
 
 # flags, allow multiple mode together
 syn = 0b0001
@@ -20,6 +23,7 @@ def new_packet():
         0,  # sequence number
         0,  # acknowledge
         0,  # flag
+        0,  # checksum
         0   # data
     ]
     return header
@@ -75,10 +79,16 @@ def check_data_flag(packet):
     return packet[flag] & data == data
 
 '''
-Get and set data
+Get and set data and checksum
 '''
 def set_data(packet, file):
     packet[data] = file
 
 def get_data(packet):
     return packet[data]
+
+def get_checksum(packet):
+    return packet[checksum]
+
+def calc_checksum(file):
+    return hashlib.sha256(file).hexdigest()
