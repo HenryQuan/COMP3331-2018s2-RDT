@@ -1,7 +1,7 @@
 '''
 
 '''
-import sys, os
+import sys, os, random
 import socket
 from debug import *
 from packet import *
@@ -12,6 +12,10 @@ THREE_WAY_HANDSHAKE = 1
 CONNECTION_ESTABLISHED = 2
 FILE_TRANSFERRED = 3
 TERMINATION = 4
+
+# some global values
+EstimatedRTT = 0.5
+DevRTT = 0.25
 
 # current state for sender
 STATE = 0
@@ -28,10 +32,10 @@ def main():
         port = int(arguments[1])
 
         file_name = arguments[2]
-        max_windows_size = arguments[3]
-        min_segment_size = arguments[4]
+        max_windows_size = int(arguments[3])
+        max_segment_size = int(arguments[4])
         # for calculation of timeout value
-        gamma = arguments[5]
+        gamma = float(arguments[5])
 
         # From here, they are only used by the PLD module
         pDrop = float(arguments[6])
@@ -59,17 +63,18 @@ def main():
             fatal('Invalid pDelay')
 
         maxDelay = arguments[12]
-        seed = arguments[13]
 
+        # set the seed
+        random.seed(int(arguments[13]))
+
+        # Check if file exists
         if (os.path.isfile(file_name)):
             # setting up socket server
             sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             three_way_handshake(sender, host_ip, port)
-            # update this to get proper timeout
-            # sender.settimeout(gamma)
 
             # start data transfer
-            reliable_data_transfer(sender, host_ip, port, file_name)
+            reliable_data_transfer(sender, host_ip, port, file_name, max_segment_size, max_windows_size)
 
             print('Completed ^_^')
         else:
@@ -80,30 +85,39 @@ def three_way_handshake(s, ip, port):
     global STATE
     packet = new_packet()
     set_syn_flag(packet)
-    s.sendto(bytes(packet), (ip, port))
-    log('! Handshake #1 - SYN sent')
-
-    # check for response
-    response, sender = s.recvfrom(port)
-    if (check_syn_flag(response) and check_ack_flag(response)):
-        log('! Handshake #2 - SYN-ACK received')
-        packet = new_packet()
-        set_ack_flag(packet)
+    s.settimeout(calc_timeout())
+    try:
         s.sendto(bytes(packet), (ip, port))
-        log('! Handshake #3 - ACK sent')
-        # Connection has been established
-        log('! Connection is established')
-        STATE = CONNECTION_ESTABLISHED
-    else:
-        log('! Handshake failure ' + response)
-        fatal('Error: failed to handshake')
+        log('! Handshake #1 - SYN sent')
+
+        # check for response
+        response, sender = s.recvfrom(port)
+        if (check_syn_flag(response) and check_ack_flag(response)):
+            log('! Handshake #2 - SYN-ACK received')
+            packet = new_packet()
+            set_ack_flag(packet)
+            s.sendto(bytes(packet), (ip, port))
+            log('! Handshake #3 - ACK sent')
+
+            # Connection has been established
+            log('! Connection is established')
+            STATE = CONNECTION_ESTABLISHED
+        else:
+            log('! Handshake failure ' + response)
+            fatal('Error: failed to handshake')
+    except Exception:
+        log('! Handshake #1 - Timeout')
+        # Retry Connection
+        three_way_handshake(s, ip, port)
 
 # perform RDT
-def reliable_data_transfer(s, ip, port, file):
+def reliable_data_transfer(s, ip, port, file, segment_size, windows_size):
     global STATE
 
-    # read as binary
-    data = open(file, 'rb').read()
+    # get array for chunks
+    chunks = cut_into_chunks(file, segment_size)
+
+
     # keep sending data until file is transferred
     #while (STATE != FILE_TRANSFERRED):
     packet = new_packet()
@@ -117,5 +131,26 @@ def reliable_data_transfer(s, ip, port, file):
 def termination():
     return
 
-# run everything
-main()
+# cut the file into smaller chunks
+def cut_into_chunks(file, size):
+    data = open(file, 'rb')
+    chunks = []
+    # start reading from data
+    while True:
+        chunk = data.read(size)
+        if not chunk:
+            break
+        else:
+            chunks.append(chunk)
+
+    for c in chunks:
+        print(len(c))
+    return chunks
+
+# calculate estimated timeout
+def calc_timeout():
+    return EstimatedRTT + 4 * DevRTT
+
+
+
+main() # Run sender
