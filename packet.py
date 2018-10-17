@@ -82,7 +82,9 @@ def check_data_flag(packet):
 Get and set data and checksum
 '''
 def set_data(packet, file):
+    # set data and checksum
     packet[data] = file
+    packet[checksum] = calc_checksum(file)
 
 def get_data(packet):
     return packet[data]

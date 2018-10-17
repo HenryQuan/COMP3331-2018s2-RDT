@@ -114,18 +114,26 @@ def three_way_handshake(s, ip, port):
 def reliable_data_transfer(s, ip, port, file, segment_size, windows_size):
     global STATE
 
+    # get the size of file
+    max = os.path.getsize(file)
+    print(max)
     # get array for chunks
     chunks = cut_into_chunks(file, segment_size)
 
-
+    curr = 0
+    index = 0
     # keep sending data until file is transferred
-    #while (STATE != FILE_TRANSFERRED):
-    packet = new_packet()
-    set_data_flag(packet)
-    set_data(packet, data)
-    print(calc_checksum(data))
-    s.sendto(bytes(data), (ip, port))
+    while (curr != max):
+        packet = new_packet()
+        set_data_flag(packet)
+        set_data(packet, chunks[index])
+        s.sendto(chunks[index], (ip, port))
 
+        # check for response
+        response, sender = s.recvfrom(port)
+        if (check_ack_flag(response)):
+            curr += segment_size
+            index += 1
 
 # four-segment connection termination (FIN, ACK, FIN, ACK)
 def termination():
@@ -138,21 +146,17 @@ def cut_into_chunks(file, size):
     # start reading from data
     while True:
         chunk = data.read(size)
-        if not chunk:
+        # chunk is not defined or 0 length
+        if not chunk or len(chunk) is 0:
             break
         else:
             chunks.append(chunk)
 
-    total = 0
-    for c in chunks:
-        total += len(c)
-    print(total)
     return chunks
 
 # calculate estimated timeout
 def calc_timeout():
     return EstimatedRTT + 4 * DevRTT
-
 
 
 main() # Run sender

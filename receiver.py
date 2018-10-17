@@ -67,11 +67,17 @@ def main():
                     print('# Connection is now established\n')
             elif (STATE == CONNECTION_ESTABLISHED):
                 # check for get_checksum
-                print(calc_checksum(data))
-                # write as binary
-                transferred = open(file, 'wb')
-                transferred.write(data)
-                transferred.close()
+                #if (calc_checksum(data) == get_checksum(data)):
+                    # append to file
+                    transferred = open(file, 'ab')
+                    transferred.write(data)
+                    transferred.close()
+
+                    log('! Packet received')
+                    packet = new_packet()
+                    set_ack_flag(packet)
+                    receiver.sendto(bytes(packet), (sender[0], sender[1]))
+                    log('! ACK sent')
             elif (STATE == TERMINATION):
                 return
 
