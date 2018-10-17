@@ -1,7 +1,7 @@
 """
 
 """
-import sys
+import sys, pickle
 import socket
 from debug import *
 from packet import *
@@ -67,10 +67,12 @@ def main():
                     print('# Connection is now established\n')
             elif (STATE == CONNECTION_ESTABLISHED):
                 # check for get_checksum
-                #if (calc_checksum(data) == get_checksum(data)):
+                data = pickle.loads(data)
+                binary = get_data(data)
+                if (calc_checksum(binary) == get_checksum(data)):
                     # append to file
                     transferred = open(file, 'ab')
-                    transferred.write(data)
+                    transferred.write(binary)
                     transferred.close()
 
                     log('! Packet received')

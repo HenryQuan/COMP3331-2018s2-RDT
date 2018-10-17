@@ -70,14 +70,6 @@ def check_fin_flag(packet):
     # check for syn flag
     return packet[flag] & fin == fin
 
-def set_data_flag(packet):
-    # set ack flag
-    packet[flag] |= data
-
-def check_data_flag(packet):
-    # check for syn flag
-    return packet[flag] & data == data
-
 '''
 Get and set data and checksum
 '''
@@ -93,4 +85,4 @@ def get_checksum(packet):
     return packet[checksum]
 
 def calc_checksum(file):
-    return hashlib.sha256(file).hexdigest()
+    return hashlib.md5(file).hexdigest()

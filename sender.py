@@ -2,6 +2,7 @@
 
 '''
 import sys, os, random
+import pickle
 import socket
 from debug import *
 from packet import *
@@ -125,9 +126,10 @@ def reliable_data_transfer(s, ip, port, file, segment_size, windows_size):
     # keep sending data until file is transferred
     while (curr != max):
         packet = new_packet()
-        set_data_flag(packet)
         set_data(packet, chunks[index])
-        s.sendto(chunks[index], (ip, port))
+        print(packet)
+        # make packet bytes object with dumps
+        s.sendto(pickle.dumps(packet), (ip, port))
 
         # check for response
         response, sender = s.recvfrom(port)
