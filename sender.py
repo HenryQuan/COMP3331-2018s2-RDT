@@ -72,21 +72,21 @@ def main():
         if (os.path.isfile(file_name)):
             # setting up socket server
             sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            three_way_handshake(sender, host_ip, port)
+            three_way_handshake(sender, host_ip, port, gamma)
 
             # start data transfer
-            reliable_data_transfer(sender, host_ip, port, file_name, max_segment_size, max_windows_size)
+            reliable_data_transfer(sender, host_ip, port, gamma, file_name, max_segment_size, max_windows_size)
 
             print('Completed ^_^')
         else:
             fatal(file_name + ' is not found')
 
 # for connection establishment, NO PAYLOAD (data)
-def three_way_handshake(s, ip, port):
+def three_way_handshake(s, ip, port, gamma):
     global STATE
     packet = new_packet()
     set_syn_flag(packet)
-    s.settimeout(calc_timeout())
+    s.settimeout(calc_timeout(gamma))
     try:
         s.sendto(bytes(packet), (ip, port))
         log('! Handshake #1 - SYN sent')
@@ -112,7 +112,7 @@ def three_way_handshake(s, ip, port):
         three_way_handshake(s, ip, port)
 
 # perform RDT
-def reliable_data_transfer(s, ip, port, file, segment_size, windows_size):
+def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size):
     global STATE
 
     # get the size of file
@@ -129,7 +129,7 @@ def reliable_data_transfer(s, ip, port, file, segment_size, windows_size):
         set_data(packet, chunks[index])
         # make packet bytes object with dumps
         s.sendto(pickle.dumps(packet), (ip, port))
-        s.settimeout(calc_timeout())
+        s.settimeout(calc_timeout(gamma))
         # show current percentage, 2 decimals
         log('! Packet sent {0:.2f}%'.format(curr / max * 100))
         # check for response
@@ -165,8 +165,7 @@ def cut_into_chunks(file, size):
     return chunks
 
 # calculate estimated timeout
-def calc_timeout():
-    return EstimatedRTT + 4 * DevRTT
-
+def calc_timeout(gamma):
+    return EstimatedRTT + gamma * DevRTT
 
 main() # Run sender

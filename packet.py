@@ -85,4 +85,7 @@ def get_checksum(packet):
     return packet[checksum]
 
 def calc_checksum(file):
-    return hashlib.md5(file).hexdigest()
+    if type(file) is str:
+        return hashlib.md5(file).hexdigest()
+    else:
+        return ''
