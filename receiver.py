@@ -1,7 +1,7 @@
 """
 
 """
-import sys
+import sys, pickle
 import socket
 from debug import *
 from packet import *
@@ -41,7 +41,6 @@ def main():
 
             # data will be an array (bytes)
             data, sender = receiver.recvfrom(port)
-            log(data)
 
             # deal with different state
             if (STATE == SYSTEM_INIT):
@@ -66,10 +65,20 @@ def main():
                     STATE = CONNECTION_ESTABLISHED
                     print('# Connection is now established\n')
             elif (STATE == CONNECTION_ESTABLISHED):
-                # write as binary
-                transferred = open(file, 'wb')
-                transferred.write(data)
-                transferred.close()
+                # check for get_checksum
+                data = pickle.loads(data)
+                binary = get_data(data)
+                if (calc_checksum(binary) == get_checksum(data)):
+                    # append to file
+                    transferred = open(file, 'ab')
+                    transferred.write(binary)
+                    transferred.close()
+
+                    log('! Packet received')
+                    packet = new_packet()
+                    set_ack_flag(packet)
+                    receiver.sendto(bytes(packet), (sender[0], sender[1]))
+                    log('! ACK sent')
             elif (STATE == TERMINATION):
                 return
 
