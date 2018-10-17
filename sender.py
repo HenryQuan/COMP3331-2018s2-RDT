@@ -124,18 +124,26 @@ def reliable_data_transfer(s, ip, port, file, segment_size, windows_size):
     curr = 0
     index = 0
     # keep sending data until file is transferred
-    while (curr != max):
+    while (curr < max):
         packet = new_packet()
         set_data(packet, chunks[index])
-        print(packet)
         # make packet bytes object with dumps
         s.sendto(pickle.dumps(packet), (ip, port))
-
+        s.settimeout(calc_timeout())
+        # show current percentage, 2 decimals
+        log('! Packet sent {0:.2f}%'.format(curr / max * 100))
         # check for response
-        response, sender = s.recvfrom(port)
-        if (check_ack_flag(response)):
-            curr += segment_size
-            index += 1
+        try:
+            response, sender = s.recvfrom(port)
+            if (check_ack_flag(response)):
+                curr += segment_size
+                index += 1
+        except Exception:
+            log('! Timeout')
+
+    # update current state
+    STATE = FILE_TRANSFERRED
+
 
 # four-segment connection termination (FIN, ACK, FIN, ACK)
 def termination():

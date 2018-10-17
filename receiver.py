@@ -41,7 +41,6 @@ def main():
 
             # data will be an array (bytes)
             data, sender = receiver.recvfrom(port)
-            log(data)
 
             # deal with different state
             if (STATE == SYSTEM_INIT):
