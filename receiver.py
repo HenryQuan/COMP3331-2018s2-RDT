@@ -34,7 +34,7 @@ def main():
         receiver.bind((host, port))
         # Receiver is now started
         STATE = SYSTEM_INIT
-        curr = 0
+        ack = 0
 
         while True:
             if (STATE == SYSTEM_INIT):
@@ -70,19 +70,21 @@ def main():
                 # check for get_checksum
                 data = pickle.loads(data)
                 binary = get_data(data)
-                if (calc_checksum(binary) == get_checksum(data)):
+                # to check if received correct amount of data
+                binary_len = len(binary)
+                if (calc_checksum(binary) == get_checksum(data) and get_ack(data) == ack + binary_len):
                     # append to file
                     transferred = open(file, 'ab')
                     transferred.write(binary)
                     transferred.close()
 
                     log('! Packet received', STARTING_TIME)
-                    curr += len(binary)
+                    ack += len(binary)
                     packet = new_packet()
                     set_ack_flag(packet)
-                    set_ack(packet, curr)
+                    set_ack(packet, ack)
                     receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
-                    log('! ACK {0} sent'.format(curr), STARTING_TIME)
+                    log('! ACK {0} sent'.format(ack), STARTING_TIME)
                 else:
                     log('! Packet is corrupted, ACK {0}'.format(curr), STARTING_TIME)
             elif (STATE == TERMINATION):
