@@ -145,10 +145,14 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size)
         try:
             response, sender = s.recvfrom(port)
             response = pickle.loads(response)
+            if (lucky(0.8)):
+                response = [0,0,0,0,0]
             # print(response, check_ack_flag(response), get_ack(response), ack)
             if (check_ack_flag(response) and get_ack(response) == ack):
                 curr += data_len
                 index += 1
+            else:
+                log('! Corrupted', STARTING_TIME)
         except Exception:
             log('! Timeout', STARTING_TIME)
 
@@ -206,5 +210,15 @@ def cut_into_chunks(file, size):
 # calculate estimated timeout
 def calc_timeout(gamma):
     return EstimatedRTT + gamma * DevRTT
+
+# This condition pass ?? percent of the time
+def lucky(percentage):
+    that_number = random.randint(1, 100)
+    range = int(percentage * 100)
+    if (that_number <= range):
+        return True
+    else:
+        # Unlucky one like me
+        return False
 
 main() # Run sender

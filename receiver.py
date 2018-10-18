@@ -104,7 +104,11 @@ def main():
                     receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
                     log('! ACK {0} sent'.format(ack), STARTING_TIME)
                 else:
-                    log('! Packet is corrupted, ACK {0}'.format(curr), STARTING_TIME)
+                    packet = new_packet()
+                    set_ack_flag(packet)
+                    set_ack(packet, ack)
+                    receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
+                    log('! Packet is corrupted, ACK {0}'.format(ack), STARTING_TIME)
             elif (STATE == FIN):
                 if (check_ack_flag(data)):
                     # Data is received
