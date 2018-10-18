@@ -33,6 +33,7 @@ def main():
         receiver.bind((host, port))
         # Receiver is now started
         STATE = SYSTEM_INIT
+        curr = 0
 
         while True:
             if (STATE == SYSTEM_INIT):
@@ -75,10 +76,15 @@ def main():
                     transferred.close()
 
                     log('! Packet received')
+                    curr += len(binary)
+                    print(curr)
                     packet = new_packet()
                     set_ack_flag(packet)
-                    receiver.sendto(bytes(packet), (sender[0], sender[1]))
+                    set_ack(packet, curr)
+                    receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
                     log('! ACK sent')
+                else:
+                    log('! Packet is corrupted, ACK {0}'.format(curr))
             elif (STATE == TERMINATION):
                 return
 

@@ -109,7 +109,7 @@ def three_way_handshake(s, ip, port, gamma):
     except Exception:
         log('! Handshake #1 - Timeout')
         # Retry Connection
-        three_way_handshake(s, ip, port)
+        three_way_handshake(s, ip, port, gamma)
 
 # perform RDT
 def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size):
@@ -117,7 +117,7 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size)
 
     # get the size of file
     max = os.path.getsize(file)
-    print(max)
+    # print(max)
     # get array for chunks
     chunks = cut_into_chunks(file, segment_size)
 
@@ -127,16 +127,24 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size)
     while (curr < max):
         packet = new_packet()
         set_data(packet, chunks[index])
+        data_len = len(chunks[index])
+        # set seq and ack to enter correct packet is received
+        seq = curr
+        ack = seq + data_len
+        set_seq(packet, seq)
+        set_ack(packet, ack)
         # make packet bytes object with dumps
         s.sendto(pickle.dumps(packet), (ip, port))
         s.settimeout(calc_timeout(gamma))
         # show current percentage, 2 decimals
-        log('! Packet sent {0:.2f}%'.format(curr / max * 100))
+        log('! Packet sent {0:.2f}% (SEQ {1} - ACK {2})'.format(curr / max * 100, seq, ack))
         # check for response
         try:
             response, sender = s.recvfrom(port)
-            if (check_ack_flag(response)):
-                curr += segment_size
+            response = pickle.loads(response)
+            # print(response, check_ack_flag(response), get_ack(response), ack)
+            if (check_ack_flag(response) and get_ack(response) == ack):
+                curr += data_len
                 index += 1
         except Exception:
             log('! Timeout')
