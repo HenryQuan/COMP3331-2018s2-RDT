@@ -10,7 +10,6 @@ ack = 1
 flag = 2
 checksum = 3
 data = 4
-data_max_length = 5
 
 # flags, allow multiple mode together
 syn = 0b0001

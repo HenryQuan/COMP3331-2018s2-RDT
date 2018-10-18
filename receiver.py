@@ -2,7 +2,7 @@
 
 """
 import sys, pickle
-import socket
+import socket, datetime
 from debug import *
 from packet import *
 
@@ -14,6 +14,7 @@ TERMINATION = 3
 
 # current state for reveiver
 STATE = 0
+STARTING_TIME = datetime.datetime.now()
 
 def main():
     global STATE
@@ -47,13 +48,13 @@ def main():
             if (STATE == SYSTEM_INIT):
                 # syn from sender for handshake
                 if (check_syn_flag(data)):
-                    log('! Handshake #1 - SYN received')
+                    log('! Handshake #1 - SYN received', STARTING_TIME)
                     packet = new_packet()
                     set_syn_flag(packet)
                     set_ack_flag(packet)
                     # 0 is sender ip and 1 is sender port
                     receiver.sendto(bytes(packet), (sender[0], sender[1]))
-                    log('! Handshake #2 - SYN-ACK sent')
+                    log('! Handshake #2 - SYN-ACK sent', STARTING_TIME)
 
                     # enter THREE_WAY_HANDSHAKE
                     STATE = THREE_WAY_HANDSHAKE
@@ -61,7 +62,7 @@ def main():
             elif (STATE == THREE_WAY_HANDSHAKE):
                 # for the final ack
                 if (check_ack_flag(data)):
-                    log('! Handshake #3 - ACK received')
+                    log('! Handshake #3 - ACK received', STARTING_TIME)
                     # enter CONNECTION_ESTABLISHED
                     STATE = CONNECTION_ESTABLISHED
                     print('# Connection is now established\n')
@@ -75,16 +76,15 @@ def main():
                     transferred.write(binary)
                     transferred.close()
 
-                    log('! Packet received')
+                    log('! Packet received', STARTING_TIME)
                     curr += len(binary)
-                    print(curr)
                     packet = new_packet()
                     set_ack_flag(packet)
                     set_ack(packet, curr)
                     receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
-                    log('! ACK sent')
+                    log('! ACK {0} sent'.format(curr), STARTING_TIME)
                 else:
-                    log('! Packet is corrupted, ACK {0}'.format(curr))
+                    log('! Packet is corrupted, ACK {0}'.format(curr), STARTING_TIME)
             elif (STATE == TERMINATION):
                 return
 

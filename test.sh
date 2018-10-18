@@ -3,7 +3,7 @@
 type=.pdf
 
 if [ $1 == "s" ]; then
-    py sender.py 127.0.0.1 8080 "PDF/Test/test2$type" 10 1000 2 0.5 0.1 0.1 0.1 4 0.1 1000 473892
+    py sender.py 127.0.0.1 8080 "PDF/Test/test0$type" 10 1000 2 0.5 0.1 0.1 0.1 4 0.1 1000 473892
 elif [ $1 == "r" ]; then
     py receiver.py 8080 "test$type"
 fi

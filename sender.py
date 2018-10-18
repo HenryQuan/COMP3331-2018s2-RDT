@@ -3,7 +3,7 @@
 '''
 import sys, os, random
 import pickle
-import socket
+import socket, datetime
 from debug import *
 from packet import *
 
@@ -20,6 +20,7 @@ DevRTT = 0.25
 
 # current state for sender
 STATE = 0
+STARTING_TIME = datetime.datetime.now()
 
 def main():
     # get a list of arguments, there are should be 14 of them
@@ -77,7 +78,7 @@ def main():
             # start data transfer
             reliable_data_transfer(sender, host_ip, port, gamma, file_name, max_segment_size, max_windows_size)
 
-            print('Completed ^_^')
+            print('! Completed ^_^')
         else:
             fatal(file_name + ' is not found')
 
@@ -89,25 +90,25 @@ def three_way_handshake(s, ip, port, gamma):
     s.settimeout(calc_timeout(gamma))
     try:
         s.sendto(bytes(packet), (ip, port))
-        log('! Handshake #1 - SYN sent')
+        log('! Handshake #1 - SYN sent', STARTING_TIME)
 
         # check for response
         response, sender = s.recvfrom(port)
         if (check_syn_flag(response) and check_ack_flag(response)):
-            log('! Handshake #2 - SYN-ACK received')
+            log('! Handshake #2 - SYN-ACK received', STARTING_TIME)
             packet = new_packet()
             set_ack_flag(packet)
             s.sendto(bytes(packet), (ip, port))
-            log('! Handshake #3 - ACK sent')
+            log('! Handshake #3 - ACK sent', STARTING_TIME)
 
             # Connection has been established
-            log('! Connection is established')
+            log('! Connection is established', STARTING_TIME)
             STATE = CONNECTION_ESTABLISHED
         else:
-            log('! Handshake failure ' + response)
+            log('! Handshake failure ' + response, STARTING_TIME)
             fatal('Error: failed to handshake')
     except Exception:
-        log('! Handshake #1 - Timeout')
+        log('! Handshake #1 - Timeout', STARTING_TIME)
         # Retry Connection
         three_way_handshake(s, ip, port, gamma)
 
@@ -137,7 +138,7 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size)
         s.sendto(pickle.dumps(packet), (ip, port))
         s.settimeout(calc_timeout(gamma))
         # show current percentage, 2 decimals
-        log('! Packet sent {0:.2f}% (SEQ {1} - ACK {2})'.format(curr / max * 100, seq, ack))
+        log('! Packet sent {0:.2f}% (SEQ {1} - ACK {2})'.format(curr / max * 100, seq, ack), STARTING_TIME)
         # check for response
         try:
             response, sender = s.recvfrom(port)
@@ -147,7 +148,7 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size)
                 curr += data_len
                 index += 1
         except Exception:
-            log('! Timeout')
+            log('! Timeout', STARTING_TIME)
 
     # update current state
     STATE = FILE_TRANSFERRED
