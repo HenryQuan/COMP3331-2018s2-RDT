@@ -77,8 +77,10 @@ def main():
 
             # start data transfer
             reliable_data_transfer(sender, host_ip, port, gamma, file_name, max_segment_size, max_windows_size)
+            # termination
+            termination(sender, host_ip, port, gamma)
 
-            print('! Completed ^_^')
+            print('Completed ^_^\nThank you for using STP')
         else:
             fatal(file_name + ' is not found')
 
@@ -155,8 +157,36 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size)
 
 
 # four-segment connection termination (FIN, ACK, FIN, ACK)
-def termination():
-    return
+def termination(s, ip, port, gamma):
+    if (STATE == FILE_TRANSFERRED):
+        # send fin
+        packet = new_packet()
+        set_fin_flag(packet)
+        s.sendto(pickle.dumps(packet), (ip, port))
+        log('! FIN sent', STARTING_TIME)
+        s.settimeout(calc_timeout(gamma))
+        try:
+            ack, sender = s.recvfrom(port)
+            # print(response, check_ack_flag(response), get_ack(response), ack)
+            if (check_ack_flag(ack)):
+                fin, sender = s.recvfrom(port)
+                if (check_fin_flag(fin)):
+                    # send fin
+                    packet = new_packet()
+                    set_ack_flag(packet)
+                    s.sendto(bytes(packet), (ip, port))
+                    log('! ACK sent', STARTING_TIME)
+                    # TODO: Add timeout here
+                else:
+                    log('! Packet is corrupted', STARTING_TIME)
+                    termination(s, ip, port, gamma)
+            else:
+                log('! Packet is corrupted', STARTING_TIME)
+                termination(s, ip, port, gamma)
+        except Exception:
+            log('! Timeout', STARTING_TIME)
+            # try again
+            termination(s, ip, port, gamma)
 
 # cut the file into smaller chunks
 def cut_into_chunks(file, size):

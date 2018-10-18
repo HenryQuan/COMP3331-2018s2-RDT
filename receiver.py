@@ -10,7 +10,8 @@ from packet import *
 SYSTEM_INIT = 0
 THREE_WAY_HANDSHAKE = 1
 CONNECTION_ESTABLISHED = 2
-TERMINATION = 3
+FIN = 3
+TERMINATION = 4
 
 # current state for reveiver
 STATE = 0
@@ -36,7 +37,7 @@ def main():
         STATE = SYSTEM_INIT
         ack = 0
 
-        while True:
+        while (STATE != TERMINATION):
             if (STATE == SYSTEM_INIT):
                 # do some setup if necessary
                 print('# Reveiver is initialised\n')
@@ -69,6 +70,23 @@ def main():
             elif (STATE == CONNECTION_ESTABLISHED):
                 # check for get_checksum
                 data = pickle.loads(data)
+
+                # check for fin
+                if (check_fin_flag(data)):
+                    log('! FIN received', STARTING_TIME)
+                    # ACK
+                    packet = new_packet()
+                    set_ack_flag(packet)
+                    receiver.sendto(bytes(packet), (sender[0], sender[1]))
+                    log('! ACK sent', STARTING_TIME)
+                    # FIN
+                    packet = new_packet()
+                    set_fin_flag(packet)
+                    receiver.sendto(bytes(packet), (sender[0], sender[1]))
+                    log('! FIN sent', STARTING_TIME)
+                    STATE = FIN
+                    continue
+
                 binary = get_data(data)
                 # to check if received correct amount of data
                 binary_len = len(binary)
@@ -87,9 +105,11 @@ def main():
                     log('! ACK {0} sent'.format(ack), STARTING_TIME)
                 else:
                     log('! Packet is corrupted, ACK {0}'.format(curr), STARTING_TIME)
-            elif (STATE == TERMINATION):
-                return
-
+            elif (STATE == FIN):
+                if (check_ack_flag(data)):
+                    # Data is received
+                    STATE = TERMINATION
+    print('Thanks for everything. Bye!')
 
 # dont forget to run the function
 main()
