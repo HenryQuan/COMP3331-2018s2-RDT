@@ -4,6 +4,7 @@ import datetime
 DEBUG_MODE = True
 LOG_FILE = 'stp.log'
 
+STARTING_TIME = None
 
 # Debugging message
 nprint = print
@@ -12,8 +13,13 @@ def print(*args, **kwargs):
         nprint(*args, **kwargs)
 
 # start is the starting time to get pure transmission time
-def log(message, start):
-    m = '- {0} --- {1}\n'.format(time_diff(start), message)
+def log(message):
+    # update time when first called
+    global STARTING_TIME
+    if (STARTING_TIME is None):
+        STARTING_TIME = datetime.datetime.now()
+
+    m = '- {0} --- {1}\n'.format(time_diff(STARTING_TIME), message)
     print(m)
     log_file = open(LOG_FILE, 'a')
     log_file.write(m)

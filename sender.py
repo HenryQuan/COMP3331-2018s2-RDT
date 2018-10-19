@@ -21,7 +21,6 @@ DevRTT = 0.25
 
 # current state for sender
 STATE = 0
-STARTING_TIME = datetime.datetime.now()
 
 def main():
     # get a list of arguments, there are should be 14 of them
@@ -99,25 +98,25 @@ def three_way_handshake(s, ip, port, gamma):
     s.settimeout(calc_timeout(gamma))
     try:
         s.sendto(bytes(packet), (ip, port))
-        log('! Handshake #1 - SYN sent', STARTING_TIME)
+        log('! Handshake #1 - SYN sent')
 
         # check for response
         response, sender = s.recvfrom(port)
         if (check_syn_flag(response) and check_ack_flag(response)):
-            log('! Handshake #2 - SYN-ACK received', STARTING_TIME)
+            log('! Handshake #2 - SYN-ACK received')
             packet = new_packet()
             set_ack_flag(packet)
             s.sendto(bytes(packet), (ip, port))
-            log('! Handshake #3 - ACK sent', STARTING_TIME)
+            log('! Handshake #3 - ACK sent')
 
             # Connection has been established
-            log('! Connection is established', STARTING_TIME)
+            log('! Connection is established')
             STATE = CONNECTION_ESTABLISHED
         else:
-            log('! Handshake failure ' + response, STARTING_TIME)
+            log('! Handshake failure ' + response)
             fatal('Error: failed to handshake')
     except Exception:
-        log('! Handshake #1 - Timeout', STARTING_TIME)
+        log('! Handshake #1 - Timeout')
         # Retry Connection
         three_way_handshake(s, ip, port, gamma)
 
@@ -157,13 +156,13 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
         set_ack(packet, ack)
         if (lucky(pDrop)):
             # drop this packet
-            log('! Packet dropped', STARTING_TIME)
+            log('! Packet dropped')
         else:
             if (lucky(pDup)):
                 # send packet twice
                 s.sendto(pickle.dumps(packet), (ip, port))
                 s.settimeout(calc_timeout(gamma))
-                log('! Dup packet sent {0:.2f}% (SEQ {1} - ACK {2})'.format(curr / max * 100, seq, ack), STARTING_TIME)
+                log('! Dup packet sent {0:.2f}% (SEQ {1} - ACK {2})'.format(curr / max * 100, seq, ack))
             else:
                 if (lucky(pCorrupt)):
                     # change a single bit
@@ -174,7 +173,7 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
                 s.sendto(pickle.dumps(packet), (ip, port))
                 s.settimeout(calc_timeout(gamma))
                 # show current percentage, 2 decimals
-                log('! Packet sent {0:.2f}% (SEQ {1} - ACK {2})'.format(curr / max * 100, seq, ack), STARTING_TIME)
+                log('! Packet sent {0:.2f}% (SEQ {1} - ACK {2})'.format(curr / max * 100, seq, ack))
                 # check for response
                 try:
                     response, sender = s.recvfrom(port)
@@ -187,9 +186,9 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
                             curr += data_len
                             index += 1
                     else:
-                        log('! Corrupted', STARTING_TIME)
+                        log('! Corrupted')
                 except Exception:
-                    log('! Timeout', STARTING_TIME)
+                    log('! Timeout')
 
     # update current state
     STATE = FILE_TRANSFERRED
@@ -202,30 +201,30 @@ def termination(s, ip, port, gamma):
         packet = new_packet()
         set_fin_flag(packet)
         s.sendto(pickle.dumps(packet), (ip, port))
-        log('! FIN sent', STARTING_TIME)
+        log('! FIN sent')
         s.settimeout(calc_timeout(gamma))
         try:
             ack, sender = s.recvfrom(port)
             ack = pickle.loads(ack)
             if (check_ack_flag(ack)):
-                log('! ACK received', STARTING_TIME)
+                log('! ACK received')
                 fin, sender = s.recvfrom(port)
                 if (check_fin_flag(fin)):
-                    log('! FIN received', STARTING_TIME)
+                    log('! FIN received')
                     # send fin
                     packet = new_packet()
                     set_ack_flag(packet)
                     s.sendto(bytes(packet), (ip, port))
-                    log('! ACK sent', STARTING_TIME)
+                    log('! ACK sent')
                     # TODO: Add timeout here
                 else:
-                    log('! Packet is corrupted (FIN)', STARTING_TIME)
+                    log('! Packet is corrupted (FIN)')
                     termination(s, ip, port, gamma)
             else:
-                log('! Packet is corrupted (ACK)', STARTING_TIME)
+                log('! Packet is corrupted (ACK)')
                 termination(s, ip, port, gamma)
         except Exception:
-            log('! Timeout', STARTING_TIME)
+            log('! Timeout')
             # try again
             termination(s, ip, port, gamma)
 
