@@ -1,7 +1,9 @@
-import sys
+import sys, os
 import datetime
 
 DEBUG_MODE = True
+LOG_FILE = 'stp.log'
+
 
 # Debugging message
 nprint = print
@@ -11,7 +13,11 @@ def print(*args, **kwargs):
 
 # start is the starting time to get pure transmission time
 def log(message, start):
-    print('- {0} -\n{1}\n'.format(time_diff(start), message))
+    m = '- {0} --- {1}\n'.format(time_diff(start), message)
+    print(m)
+    log_file = open(LOG_FILE, 'a')
+    log_file.write(m)
+    log_file.close()
 
 # Fatal error
 def fatal(message):

@@ -50,13 +50,13 @@ def main():
             if (STATE == SYSTEM_INIT):
                 # syn from sender for handshake
                 if (check_syn_flag(data)):
-                    log('! Handshake #1 - SYN received', STARTING_TIME)
+                    log('# Handshake #1 - SYN received', STARTING_TIME)
                     packet = new_packet()
                     set_syn_flag(packet)
                     set_ack_flag(packet)
                     # 0 is sender ip and 1 is sender port
                     receiver.sendto(bytes(packet), (sender[0], sender[1]))
-                    log('! Handshake #2 - SYN-ACK sent', STARTING_TIME)
+                    log('# Handshake #2 - SYN-ACK sent', STARTING_TIME)
 
                     # enter THREE_WAY_HANDSHAKE
                     STATE = THREE_WAY_HANDSHAKE
@@ -64,7 +64,7 @@ def main():
             elif (STATE == THREE_WAY_HANDSHAKE):
                 # for the final ack
                 if (check_ack_flag(data)):
-                    log('! Handshake #3 - ACK received', STARTING_TIME)
+                    log('# Handshake #3 - ACK received', STARTING_TIME)
                     # enter CONNECTION_ESTABLISHED
                     STATE = CONNECTION_ESTABLISHED
                     print('# Connection is now established\n')
@@ -74,17 +74,8 @@ def main():
 
                 # check for fin
                 if (check_fin_flag(data)):
-                    log('! FIN received', STARTING_TIME)
-                    # ACK
-                    packet = new_packet()
-                    set_ack_flag(packet)
-                    receiver.sendto(bytes(packet), (sender[0], sender[1]))
-                    log('! ACK sent', STARTING_TIME)
-                    # FIN
-                    packet = new_packet()
-                    set_fin_flag(packet)
-                    receiver.sendto(bytes(packet), (sender[0], sender[1]))
-                    log('! FIN sent', STARTING_TIME)
+                    log('# FIN received', STARTING_TIME)
+                    termination(receiver, sender)
                     STATE = FIN
                     continue
 
@@ -97,24 +88,42 @@ def main():
                     transferred.write(binary)
                     transferred.close()
 
-                    log('! Packet received', STARTING_TIME)
+                    log('# Packet received', STARTING_TIME)
                     ack += len(binary)
                     packet = new_packet()
                     set_ack_flag(packet)
                     set_ack(packet, ack)
                     receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
-                    log('! ACK {0} sent'.format(ack), STARTING_TIME)
+                    log('# ACK {0} sent'.format(ack), STARTING_TIME)
                 else:
                     packet = new_packet()
                     set_ack_flag(packet)
                     set_ack(packet, ack)
                     receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
-                    log('! Packet is corrupted, ACK {0}'.format(ack), STARTING_TIME)
+                    log('# Packet is corrupted, ACK {0}'.format(ack), STARTING_TIME)
             elif (STATE == FIN):
                 if (check_ack_flag(data)):
                     # Data is received
+                    log('# ACK received, closed', STARTING_TIME)
                     STATE = TERMINATION
-    print('Thanks for everything. Bye!')
+                else:
+                    # Corrupted
+                    log('# Corrupted, retry', STARTING_TIME)
+                    termination(receiver, sender)
+
+def termination(receiver, sender):
+    # ACK
+    packet = new_packet()
+    set_ack_flag(packet)
+    receiver.sendto(bytes(packet), (sender[0], sender[1]))
+    log('# ACK sent', STARTING_TIME)
+    # FIN
+    packet = new_packet()
+    set_fin_flag(packet)
+    receiver.sendto(bytes(packet), (sender[0], sender[1]))
+    log('# FIN sent', STARTING_TIME)
+
 
 # dont forget to run the function
 main()
+print('Thanks for everything. Bye!')

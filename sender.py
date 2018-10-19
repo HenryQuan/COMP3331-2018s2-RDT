@@ -31,6 +31,13 @@ def main():
         # 14 arguments are ... probably too many
         fatal('Usage: python sender.py receiver_host_ip receiver_port file.pdf MWS MSS gamma pDrop pDuplicate pCorrupt pOrder maxOrder pDelay maxDelay seed')
     else:
+        if (os.path.isfile('stp.log')):
+            # override current text
+            log_file = open(LOG_FILE, 'w')
+            log_file.write('! is from sender, # is from receiver\n')
+            log_file.close()
+
+
         host_ip = arguments[0]
         port = int(arguments[1])
 
@@ -66,8 +73,6 @@ def main():
             fatal('Invalid pDelay')
 
         maxDelay = arguments[12]
-
-        # set the seed
         random.seed(int(arguments[13]))
 
         # Check if file exists
@@ -77,7 +82,8 @@ def main():
             three_way_handshake(sender, host_ip, port, gamma)
 
             # start data transfer
-            reliable_data_transfer(sender, host_ip, port, gamma, file_name, max_segment_size, max_windows_size)
+            reliable_data_transfer(sender, host_ip, port, gamma, file_name, max_segment_size, max_windows_size,
+                pDrop, pDup, pCorrupt, pOrder, maxOrder, pDelay, maxDelay)
             # termination
             termination(sender, host_ip, port, gamma)
 
@@ -116,7 +122,7 @@ def three_way_handshake(s, ip, port, gamma):
         three_way_handshake(s, ip, port, gamma)
 
 # perform RDT
-def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size):
+def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size, pDrop, pDup, pCorrupt, pOrder, maxOrder, pDelay, maxDelay):
     global STATE
 
     # get the size of file
@@ -129,31 +135,61 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size)
     index = 0
     # keep sending data until file is transferred
     while (curr < max):
+        """
+        PLD should be able to take care of all these
+        • Drop packets
+        • Duplicate packets
+        • Create bit errors within packets (a single bit error)
+        • Transmits out of order packets
+        • Delays packets
+        """
+        window = 0
+        #while (window < windows_size):
+        # This is for pipeline
         packet = new_packet()
-        set_data(packet, chunks[index])
+        data = chunks[index]
+        set_data(packet, data)
         data_len = len(chunks[index])
         # set seq and ack to enter correct packet is received
         seq = curr
         ack = seq + data_len
         set_seq(packet, seq)
         set_ack(packet, ack)
-        # make packet bytes object with dumps
-        s.sendto(pickle.dumps(packet), (ip, port))
-        s.settimeout(calc_timeout(gamma))
-        # show current percentage, 2 decimals
-        log('! Packet sent {0:.2f}% (SEQ {1} - ACK {2})'.format(curr / max * 100, seq, ack), STARTING_TIME)
-        # check for response
-        try:
-            response, sender = s.recvfrom(port)
-            response = pickle.loads(response)
-            # print(response, check_ack_flag(response), get_ack(response), ack)
-            if (check_ack_flag(response) and get_ack(response) == ack):
-                curr += data_len
-                index += 1
+        if (lucky(pDrop)):
+            # drop this packet
+            log('! Packet dropped', STARTING_TIME)
+        else:
+            if (lucky(pDup)):
+                # send packet twice
+                s.sendto(pickle.dumps(packet), (ip, port))
+                s.settimeout(calc_timeout(gamma))
+                log('! Dup packet sent {0:.2f}% (SEQ {1} - ACK {2})'.format(curr / max * 100, seq, ack), STARTING_TIME)
             else:
-                log('! Corrupted', STARTING_TIME)
-        except Exception:
-            log('! Timeout', STARTING_TIME)
+                if (lucky(pCorrupt)):
+                    # change a single bit
+                    packet = [0, 0, 0, 0, b'']
+                    set_seq(packet, seq)
+                    set_ack(packet, ack)
+                # make packet bytes object with dumps
+                s.sendto(pickle.dumps(packet), (ip, port))
+                s.settimeout(calc_timeout(gamma))
+                # show current percentage, 2 decimals
+                log('! Packet sent {0:.2f}% (SEQ {1} - ACK {2})'.format(curr / max * 100, seq, ack), STARTING_TIME)
+                # check for response
+                try:
+                    response, sender = s.recvfrom(port)
+                    response = pickle.loads(response)
+                    # print(response, check_ack_flag(response), get_ack(response), ack)
+                    if (check_ack_flag(response)):
+                        receiver_ack = get_ack(response)
+                        if (receiver_ack == ack):
+                            # data received
+                            curr += data_len
+                            index += 1
+                    else:
+                        log('! Corrupted', STARTING_TIME)
+                except Exception:
+                    log('! Timeout', STARTING_TIME)
 
     # update current state
     STATE = FILE_TRANSFERRED
@@ -170,10 +206,12 @@ def termination(s, ip, port, gamma):
         s.settimeout(calc_timeout(gamma))
         try:
             ack, sender = s.recvfrom(port)
-            # print(response, check_ack_flag(response), get_ack(response), ack)
+            ack = pickle.loads(ack)
             if (check_ack_flag(ack)):
+                log('! ACK received', STARTING_TIME)
                 fin, sender = s.recvfrom(port)
                 if (check_fin_flag(fin)):
+                    log('! FIN received', STARTING_TIME)
                     # send fin
                     packet = new_packet()
                     set_ack_flag(packet)
@@ -181,10 +219,10 @@ def termination(s, ip, port, gamma):
                     log('! ACK sent', STARTING_TIME)
                     # TODO: Add timeout here
                 else:
-                    log('! Packet is corrupted', STARTING_TIME)
+                    log('! Packet is corrupted (FIN)', STARTING_TIME)
                     termination(s, ip, port, gamma)
             else:
-                log('! Packet is corrupted', STARTING_TIME)
+                log('! Packet is corrupted (ACK)', STARTING_TIME)
                 termination(s, ip, port, gamma)
         except Exception:
             log('! Timeout', STARTING_TIME)
@@ -205,6 +243,16 @@ def cut_into_chunks(file, size):
             chunks.append(chunk)
 
     return chunks
+
+# This condition pass ?? percent of the time
+def lucky(percentage):
+    that_number = random.randint(1, 100)
+    range = int(percentage * 100)
+    if (that_number <= range):
+        return True
+    else:
+        # Unlucky one like me
+        return False
 
 # calculate estimated timeout
 def calc_timeout(gamma):
