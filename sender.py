@@ -1,5 +1,6 @@
 '''
-
+Send data to a certain address:port
+It has many guards to enable data is all good
 '''
 import sys, os, random
 import pickle

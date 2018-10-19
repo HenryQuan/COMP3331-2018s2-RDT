@@ -10,7 +10,7 @@ import random
 
 # Emulate real life environment, too many arguments...
 def sender_in_real_life(s, ip, host, time, seed, pDrop, pDup, pCorrupt, pOrder, maxOrder, pDelay, maxDelay):
-
+    random.seed(seed)
 
 # This condition pass ?? percent of the time
 def lucky(percentage):

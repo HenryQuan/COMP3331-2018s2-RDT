@@ -1,5 +1,6 @@
 """
-
+Receive data from port and save it as file
+It has multiple states and check out of order packet
 """
 import sys, pickle
 import socket, datetime
