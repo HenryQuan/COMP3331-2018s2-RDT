@@ -44,7 +44,7 @@ def main():
         while (STATE != TERMINATION):
             if (STATE == SYSTEM_INIT):
                 # do some setup if necessary
-                print('R Reveiver is initialised\n')
+                print('[R] Reveiver is initialised\n')
 
             # data will be an array (bytes)
             data, sender = receiver.recvfrom(port)
@@ -53,31 +53,31 @@ def main():
             if (STATE == SYSTEM_INIT):
                 # syn from sender for handshake
                 if (check_syn_flag(data)):
-                    log('R Handshake #1 - SYN received')
+                    log('[R] Handshake #1 - SYN received')
                     packet = new_packet()
                     set_syn_flag(packet)
                     set_ack_flag(packet)
                     # 0 is sender ip and 1 is sender port
                     receiver.sendto(bytes(packet), (sender[0], sender[1]))
-                    log('R Handshake #2 - SYN-ACK sent')
+                    log('[R] Handshake #2 - SYN-ACK sent')
 
                     # enter THREE_WAY_HANDSHAKE
                     STATE = THREE_WAY_HANDSHAKE
-                    print('R Three way handshake mode entered\n')
+                    print('[R] Three way handshake mode entered\n')
             elif (STATE == THREE_WAY_HANDSHAKE):
                 # for the final ack
                 if (check_ack_flag(data)):
-                    log('R Handshake #3 - ACK received')
+                    log('[R] Handshake #3 - ACK received')
                     # enter CONNECTION_ESTABLISHED
                     STATE = CONNECTION_ESTABLISHED
-                    print('R Connection is now established\n')
+                    print('[R] Connection is now established\n')
             elif (STATE == CONNECTION_ESTABLISHED):
                 # check for get_checksum
                 data = pickle.loads(data)
 
                 # check for fin
                 if (check_fin_flag(data)):
-                    log('R FIN received')
+                    log('[R] FIN received')
                     termination(receiver, sender)
                     STATE = FIN
                     continue
@@ -93,13 +93,13 @@ def main():
                         transferred.write(binary)
                         transferred.close()
 
-                        log('R Packet received')
+                        log('[R] Packet received')
                         ack += len(binary)
                         packet = new_packet()
                         set_ack_flag(packet)
                         set_ack(packet, ack)
                         receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
-                        log('R ACK {0} sent'.format(ack))
+                        log('[R] ACK {0} sent'.format(ack))
                     else:
                         # ack seq because we need retransmission
                         ack = get_seq(data)
@@ -107,35 +107,35 @@ def main():
                         set_ack_flag(packet)
                         set_ack(packet, ack)
                         receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
-                        log('R Packet is corrupted, ACK {0}'.format(ack))
-                        log('R Out of order, ACK {0}'.format(ack))
+                        log('[R] Packet is corrupted, ACK {0}'.format(ack))
+                        log('[R] Out of order, ACK {0}'.format(ack))
                 else:
                     packet = new_packet()
                     set_ack_flag(packet)
                     set_ack(packet, ack)
                     receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
-                    log('R Packet is corrupted, ACK {0}'.format(ack))
+                    log('[R] Packet is corrupted, ACK {0}'.format(ack))
             elif (STATE == FIN):
                 if (check_ack_flag(data)):
                     # Data is received
-                    log('R ACK received, closed')
+                    log('[R] ACK received, closed')
                     STATE = TERMINATION
                 else:
                     # Corrupted
-                    log('R Corrupted, retry')
+                    log('[R] Corrupted, retry')
                     termination(receiver, sender)
 
 def termination(receiver, sender):
     # ACK
     packet = new_packet()
     set_ack_flag(packet)
-    receiver.sendto(bytes(packet), (sender[0], sender[1]))
-    log('R ACK sent')
+    receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
+    log('[R] ACK sent')
     # FIN
     packet = new_packet()
     set_fin_flag(packet)
-    receiver.sendto(bytes(packet), (sender[0], sender[1]))
-    log('R FIN sent')
+    receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
+    log('[R] FIN sent')
 
 
 # dont forget to run the function

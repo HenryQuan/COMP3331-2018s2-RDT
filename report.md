@@ -4,6 +4,8 @@ Python (3.7.0) is the language used for implementation because I think that Pyth
 The maximum segment size possible is around 8000(8kb) and any value higher will throw a IOError from Python.
 It is also assumed that three way handshake and termination are under ideal condition so there is not error checking and PLD module inside those functions.
 
+Also, there will be time offset if sender is launched first.
+
 ## Features
 - Stop and Wait + Pipeline (Go Back N)
 - PLD module (emulate real life environment)
