@@ -14,13 +14,15 @@ def print(*args, **kwargs):
         nprint(*args, **kwargs)
 
 # start is the starting time to get pure transmission time
-def log(message):
+def log(message, time=True):
     # update time when first called
     global STARTING_TIME
     if (STARTING_TIME is None):
         STARTING_TIME = datetime.datetime.now()
 
-    m = '{0} : {1}\n'.format(time_diff(STARTING_TIME), message)
+    m = message
+    if (time):
+        m = '{0} : {1}\n'.format(time_diff(STARTING_TIME), message)
     print(m)
 
     if (message.startswith('[S]')):
@@ -32,7 +34,8 @@ def log(message):
         log_file.write(m)
         log_file.close()
     else:
-        print("Message is '{0}'. Format is wrong please update it.")
+        if (time):
+            print("Message is '{0}'. Format is wrong please update it.")
 
 # Fatal error
 def fatal(message):

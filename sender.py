@@ -126,6 +126,11 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
 
     curr = 0
     index = 0
+    total = 0
+    dup = 0
+    corrupted = 0
+    dropped = 0
+    reorder = 0
     # keep sending data until file is transferred
     while (curr < max):
         """
@@ -136,6 +141,7 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
         • Transmits out of order packets
         • Delays packets
         """
+        total += 1
         window = 0
         #while (window < windows_size):
         # This is for pipeline
@@ -149,9 +155,11 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
         set_seq(packet, seq)
         set_ack(packet, ack)
         if (lucky(pDrop)):
+            dropped += 1
             # drop this packet
             log('[S] Packet dropped')
         elif (lucky(pDup)):
+            dup += 1
             # send packet twice
             s.sendto(pickle.dumps(packet), (ip, port))
             log('[S] Dup packet sent {0:.2f}% (SEQ {1} - ACK {2})'.format(curr / max * 100, seq, ack))
@@ -172,6 +180,7 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
             except socket.timeout:
                 log('[S] Timeout')
         elif (lucky(pCorrupt)):
+            corrupted += 1
             # send some random data
             packet[4] = data + bytes(0)
             set_seq(packet, seq)
@@ -200,6 +209,7 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
             except socket.timeout:
                 log('[S] Timeout')
         elif (lucky(pOrder)):
+            reorder += 1
             # send package index + 1
             data = chunks[index + 1]
             data_len = len(data)
@@ -248,6 +258,13 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
                     log('[S] Corrupted')
             except socket.timeout:
                 log('[S] Timeout')
+    log('[S] STATISTICS\n'.format(max), False)
+    log('[S] File size: {0}\n'.format(max), False)
+    log('[S] Dropped: {0}\n'.format(dropped), False)
+    log('[S] Duplicate: {0}\n'.format(dup), False)
+    log('[S] Corrupted: {0}\n'.format(corrupted), False)
+    log('[S] Reordered: {0}\n'.format(reorder), False)
+    log('[S] Total: {0}\n'.format(total), False)
     # update current state
     STATE = FILE_TRANSFERRED
 
