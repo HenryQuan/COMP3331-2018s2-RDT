@@ -88,7 +88,7 @@ def main():
                 if (calc_checksum(binary) == get_checksum(data)):
                     data_ack = get_ack(data)
                     data_seq = get_seq(data)
-                    print(data_seq, data_ack, ack)
+                    # print(data_seq, data_ack, ack)
                     if (data_ack == ack + binary_len):
                         # This is what we want, append to file
                         transferred = open(file, 'ab')
