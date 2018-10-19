@@ -96,7 +96,7 @@ def main():
                         transferred.close()
 
                         log('[R] Packet received')
-                        ack = data_ack
+                        ack += binary_len
                         packet = new_packet()
                         set_ack_flag(packet)
                         set_ack(packet, ack)
@@ -111,7 +111,7 @@ def main():
                         log('[R] Packet is duplicate, ACK {0}'.format(ack))
                     else:
                         # ack seq because we need retransmission
-                        ack = data_seq
+                        ack += binary_len
                         packet = new_packet()
                         set_ack_flag(packet)
                         set_ack(packet, ack)

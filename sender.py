@@ -75,6 +75,7 @@ def main():
         if (os.path.isfile(file_name)):
             # setting up socket server
             sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sender.settimeout(calc_timeout(gamma))
             three_way_handshake(sender, host_ip, port, gamma)
 
             # start data transfer
@@ -158,8 +159,23 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
             if (lucky(pDup)):
                 # send packet twice
                 s.sendto(pickle.dumps(packet), (ip, port))
-                s.settimeout(calc_timeout(gamma))
                 log('[S] Dup packet sent {0:.2f}% (SEQ {1} - ACK {2})'.format(curr / max * 100, seq, ack))
+                try:
+                    s.settimeout(calc_timeout(gamma))
+                    response, sender = s.recvfrom(port)
+                    response = pickle.loads(response)
+                    # print(response, check_ack_flag(response), get_ack(response), ack)
+                    if (check_ack_flag(response)):
+                        receiver_ack = get_ack(response)
+                        log('[S] ACK {0} received'.format(receiver_ack))
+                        if (receiver_ack == ack):
+                            # data received
+                            curr = ack
+                            index = get_data_index(curr, segment_size)
+                    else:
+                        log('[S] Corrupted')
+                except socket.timeout:
+                    log('[S] Timeout')
 
             if (lucky(pCorrupt)):
                 # send some random data
@@ -168,20 +184,23 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
                 set_ack(packet, ack)
             # make packet bytes object with dumps
             s.sendto(pickle.dumps(packet), (ip, port))
-            s.settimeout(calc_timeout(gamma))
+
             # show current percentage, 2 decimals
             log('[S] Packet sent {0:.2f}% (SEQ {1} - ACK {2})'.format(curr / max * 100, seq, ack))
             # check for response
+
             try:
+                s.settimeout(calc_timeout(gamma))
                 response, sender = s.recvfrom(port)
                 response = pickle.loads(response)
                 # print(response, check_ack_flag(response), get_ack(response), ack)
                 if (check_ack_flag(response)):
                     receiver_ack = get_ack(response)
+                    log('[S] ACK {0} received'.format(receiver_ack))
                     if (receiver_ack == ack):
                         # data received
-                        curr += data_len
-                        index += 1
+                        curr = ack
+                        index = get_data_index(curr, segment_size)
                 else:
                     log('[S] Corrupted')
             except socket.timeout:
@@ -189,7 +208,6 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
 
     # update current state
     STATE = FILE_TRANSFERRED
-
 
 # four-segment connection termination (FIN, ACK, FIN, ACK)
 def termination(s, ip, port, gamma):
@@ -249,6 +267,10 @@ def lucky(percentage):
     else:
         # Unlucky one like me
         return False
+
+# get index base on sequence number
+def get_data_index(size, segment):
+    return int(size / segment)
 
 # calculate estimated timeout
 def calc_timeout(gamma):
