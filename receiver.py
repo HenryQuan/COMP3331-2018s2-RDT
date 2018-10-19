@@ -31,10 +31,6 @@ def main():
         file = arguments[1]
         host = 'localhost'
 
-        # remove old file
-        if (os.path.isfile(file)):
-            os.remove(file)
-
         receiver = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         receiver.bind((host, port))
         # Receiver is now started
@@ -102,16 +98,15 @@ def main():
                         set_ack(packet, ack)
                         receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
                         log('[R] ACK {0} sent'.format(ack))
-                    elif (ack >= data_ack):
-                        # Duplicate packet, ignore
+                    elif (data_ack > ack + binary_len):
+                        # Reordered data
                         packet = new_packet()
                         set_ack_flag(packet)
                         set_ack(packet, ack)
                         receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
-                        log('[R] Packet is duplicate, ACK {0}'.format(ack))
+                        log('[R] Packet is Reordered, ACK {0}'.format(ack))
                     else:
-                        # ack seq because we need retransmission
-                        ack += binary_len
+                        # Out of order
                         packet = new_packet()
                         set_ack_flag(packet)
                         set_ack(packet, ack)
