@@ -37,6 +37,12 @@ def main():
         STATE = SYSTEM_INIT
         ack = 0
 
+        max_size = 0
+        total = 0
+        dup = 0
+        corrupted = 0
+        reorder = 0
+
         while (STATE != TERMINATION):
             if (STATE == SYSTEM_INIT):
                 # do some setup if necessary
@@ -70,6 +76,7 @@ def main():
             elif (STATE == CONNECTION_ESTABLISHED):
                 # check for get_checksum
                 data = pickle.loads(data)
+                total += 1
 
                 # check for fin
                 if (check_fin_flag(data)):
@@ -87,6 +94,7 @@ def main():
                     # print(data_seq, data_ack, ack)
                     if (data_ack == ack + binary_len):
                         # This is what we want, append to file
+                        max_size += binary_len
                         transferred = open(file, 'ab')
                         transferred.write(binary)
                         transferred.close()
@@ -98,21 +106,24 @@ def main():
                         set_ack(packet, ack)
                         receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
                         log('[R] ACK {0} sent'.format(ack))
+                    elif (data_ack <= ack):
+                        dup += 1
+                        # dup
+                        packet = new_packet()
+                        set_ack_flag(packet)
+                        set_ack(packet, ack)
+                        receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
+                        log('[R] Duplicate, ACK {0}'.format(ack))
                     elif (data_ack > ack + binary_len):
+                        reorder += 1
                         # Reordered data
                         packet = new_packet()
                         set_ack_flag(packet)
                         set_ack(packet, ack)
                         receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
                         log('[R] Packet is Reordered, ACK {0}'.format(ack))
-                    else:
-                        # Out of order
-                        packet = new_packet()
-                        set_ack_flag(packet)
-                        set_ack(packet, ack)
-                        receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
-                        log('[R] Out of order, ACK {0}'.format(ack))
                 else:
+                    corrupted += 1
                     packet = new_packet()
                     set_ack_flag(packet)
                     set_ack(packet, ack)
@@ -127,6 +138,12 @@ def main():
                     # Corrupted
                     log('[R] Corrupted, retry')
                     termination(receiver, sender)
+        log('[R] STATISTICS\n', time=False)
+        log('[R] File size: {0}\n'.format(max_size), False)
+        log('[R] Duplicate: {0}\n'.format(dup), False)
+        log('[R] Corrupted: {0}\n'.format(corrupted), False)
+        log('[R] Reordered: {0}\n'.format(reorder), False)
+        log('[R] Total: {0}\n'.format(total), False)
 
 def termination(receiver, sender):
     # ACK
