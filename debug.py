@@ -2,7 +2,8 @@ import sys, os
 import datetime
 
 DEBUG_MODE = True
-LOG_FILE = 'stp.log'
+SENDER_LOG = 'sender.log'
+RECEIVER_LOG = 'receiver.log'
 
 STARTING_TIME = None
 
@@ -19,11 +20,19 @@ def log(message):
     if (STARTING_TIME is None):
         STARTING_TIME = datetime.datetime.now()
 
-    m = '- {0} --- {1}\n'.format(time_diff(STARTING_TIME), message)
+    m = '{0} : {1}\n'.format(time_diff(STARTING_TIME), message)
     print(m)
-    log_file = open(LOG_FILE, 'a')
-    log_file.write(m)
-    log_file.close()
+
+    if (message.startswith('[S]')):
+        log_file = open(SENDER_LOG, 'a')
+        log_file.write(m)
+        log_file.close()
+    elif (message.startswith('[R]')):
+        log_file = open(RECEIVER_LOG, 'a')
+        log_file.write(m)
+        log_file.close()
+    else:
+        print("Message is '{0}'. Format is wrong please update it.")
 
 # Fatal error
 def fatal(message):
