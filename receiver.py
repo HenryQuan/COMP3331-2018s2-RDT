@@ -87,6 +87,8 @@ def main():
                 binary_len = len(binary)
                 if (calc_checksum(binary) == get_checksum(data)):
                     data_ack = get_ack(data)
+                    data_seq = get_seq(data)
+                    print(data_seq, data_ack, ack)
                     if (data_ack == ack + binary_len):
                         # This is what we want, append to file
                         transferred = open(file, 'ab')
@@ -94,20 +96,26 @@ def main():
                         transferred.close()
 
                         log('[R] Packet received')
-                        ack += len(binary)
+                        ack = data_ack
                         packet = new_packet()
                         set_ack_flag(packet)
                         set_ack(packet, ack)
                         receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
                         log('[R] ACK {0} sent'.format(ack))
-                    else:
-                        # ack seq because we need retransmission
-                        ack = get_seq(data)
+                    elif (ack >= data_ack):
+                        # Duplicate packet, ignore
                         packet = new_packet()
                         set_ack_flag(packet)
                         set_ack(packet, ack)
                         receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
-                        log('[R] Packet is corrupted, ACK {0}'.format(ack))
+                        log('[R] Packet is duplicate, ACK {0}'.format(ack))
+                    else:
+                        # ack seq because we need retransmission
+                        ack = data_seq
+                        packet = new_packet()
+                        set_ack_flag(packet)
+                        set_ack(packet, ack)
+                        receiver.sendto(pickle.dumps(packet), (sender[0], sender[1]))
                         log('[R] Out of order, ACK {0}'.format(ack))
                 else:
                     packet = new_packet()

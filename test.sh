@@ -1,9 +1,9 @@
 #!/bin/bash
 
 type=.pdf
-p=0
+p=0.7
 
-input="PDF/Test/test1$type"
+input="PDF/Test/test0$type"
 output="test$type"
 
 if [ $1 == "s" ]; then
