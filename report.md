@@ -1,10 +1,13 @@
 # Report
-Python (3.7.0) is the language used for implementation.
+Python (3.7.0) is the language used for implementation because I think that Python might be the fastest in terms of development but for debugging, it might not be as good as Java and C is too hardcore for me to use.
+
+The maximum segment size possible is around 8000(8kb) and any value higher will throw a IOError from Python.
+It is also assumed that three way handshake and termination are under ideal condition so there is not error checking and PLD module inside those functions.
 
 ## Features
-- Stop and Wait
-
-The maximum segment size possible is around 8000(8kb) and any value higher will throw a IOError.
+- Stop and Wait + Pipeline (Go Back N)
+- PLD module (emulate real life environment)
+- RDT
 
 ## Header
 - Sequence number
