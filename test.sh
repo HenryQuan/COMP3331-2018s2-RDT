@@ -14,7 +14,7 @@ else
     rm "$output"
     rm "sender.log" "receiver.log"
     if [ $1 == "s" ]; then
-        py sender.py 127.0.0.1 8080 "$input" 10 2000 2 $p $p $p $p 4 $p 1000 608
+        py sender.py 127.0.0.1 8080 "$input" 10 2000 2 $p $p $p $p 6 $p 1000 608
     elif [ $1 == "r" ]; then
         py receiver.py 8080 "$output"
     fi

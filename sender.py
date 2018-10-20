@@ -154,6 +154,9 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
         ack = seq + data_len
         set_seq(packet, seq)
         set_ack(packet, ack)
+
+        random_order = random.randint(1, maxOrder)
+
         if (lucky(pDrop)):
             dropped += 1
             # drop this packet
@@ -225,11 +228,12 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
                     log('[S] Corrupted')
             except socket.timeout:
                 log('[S] Timeout')
-        elif (lucky(pOrder) and index < len(chunks) - 1):
+        elif (lucky(pOrder) and index < len(chunks) - random_order):
             reorder += 1
             # send package index + 1
-            data = chunks[index + 1]
-            data_len = len(data)
+            data = chunks[index + random_order]
+            # Worst case, it is the last so we need to add len(data) and (n-1) * segment_size
+            data_len = len(data) + segment_size * (random_order - 1)
             set_data(packet, data)
             set_seq(packet, seq + data_len)
             set_ack(packet, ack + data_len)
