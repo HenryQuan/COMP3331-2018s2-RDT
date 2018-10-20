@@ -3,7 +3,7 @@ Send data to a certain address:port
 It has many guards to enable data is all good
 '''
 import sys, os, random
-import pickle
+import pickle, time
 import socket, datetime
 from debug import *
 from packet import *
@@ -64,7 +64,7 @@ def main():
         if (pDrop < 0.0 and pDrop > 1.0):
             fatal('Invalid pDelay')
 
-        maxDelay = arguments[12]
+        maxDelay = float(arguments[12])
         random.seed(int(arguments[13]))
 
         # Check if file exists
@@ -131,6 +131,7 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
     corrupted = 0
     dropped = 0
     reorder = 0
+    timeout = 0
     # keep sending data until file is transferred
     while (curr < max):
         """
@@ -250,8 +251,32 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
                 # dont send data but go forward
                 curr += data_len
                 index = get_data_index(curr, segment_size)
-        #elif (lucky(pDelay)):
-
+        elif (lucky(pDelay)):
+            # make sender timeout
+            timeout += 1
+            s.sendto(pickle.dumps(packet), (ip, port))
+            log('[S] Timeout packet {0:.2f}% (SEQ {1} - ACK {2})'.format(curr / max * 100, seq, ack))
+            try:
+                s.settimeout(calc_timeout(gamma))
+                time.sleep(maxDelay/1000)
+                response, sender = s.recvfrom(port)
+                response = pickle.loads(response)
+                # print(response, check_ack_flag(response), get_ack(response), ack)
+                if (check_ack_flag(response)):
+                    receiver_ack = get_ack(response)
+                    log('[S] ACK {0} received'.format(receiver_ack))
+                    if (receiver_ack == ack):
+                        # data received
+                        curr = ack
+                        index = get_data_index(curr, segment_size)
+                    else:
+                        # adjust curr and index
+                        curr = receiver_ack
+                        index = get_data_index(curr, segment_size)
+                else:
+                    log('[S] Corrupted')
+            except socket.timeout:
+                log('[S] Timeout')
         else:
             # finally normal
             s.sendto(pickle.dumps(packet), (ip, port))
@@ -282,6 +307,7 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
     log('[S] Duplicate: {0}\n'.format(dup), False)
     log('[S] Corrupted: {0}\n'.format(corrupted), False)
     log('[S] Reordered: {0}\n'.format(reorder), False)
+    log('[S] Timeout: {0}\n'.format(timeout), False)
     log('[S] Total: {0}\n'.format(total), False)
     # update current state
     STATE = FILE_TRANSFERRED
