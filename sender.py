@@ -143,9 +143,14 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
         • Delays packets
         """
         window = 0
+        # This is for pipeline
         while (window < windows_size):
+            # break
+            if (curr >= max):
+                break
+
+            log('[S] Windows {0}'.format(window))
             total += 1
-            # This is for pipeline
             packet = new_packet()
             data = chunks[index]
             set_data(packet, data)
@@ -248,10 +253,12 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
                         log('[S] Corrupted')
                 except socket.timeout:
                     log('[S] Timeout')
-            elif (lucky(pOrder) and index < len(chunks) - random_order):
+            elif (lucky(pOrder) and index < len(chunks) - 1):
                 reorder += 1
-                limit = index + random_order
-                while (index < limit):
+                # To prevent out of index error
+                if (index + random_order > len(chunks) - 1):
+                    random_order = len(chunks) - index - 1
+                while (curr < random_order):
                     data_len = len(chunks[index])
                     # dont send data but go forward
                     curr += data_len

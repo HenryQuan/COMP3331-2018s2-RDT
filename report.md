@@ -22,3 +22,5 @@ it could prevent incorrect order. Flags are used for checking the type of packet
 The main issue with this design is that it is rushed in two weeks. The only goal in mind is too finished this protocol quickly. It has a rather simple header and the header is converted from a list which depends on pickle. If pickle somehow fails, the transmission could not proceed. It also consumes a large amount of ram when transmitting large files (>100M). In this case, a 400MB file is being transmitted. The reason is that the entire file is read and cut into chunks and stored in RAM.
 ![It is like Chrome](Memory.png)
 Furthermore, STP could only transfer a single file but it could be solved by archiving multiple files. During three way handshake and termination, there are no error checking which is not so good but could be improved.
+
+For pipeline, a windows will be reset as soon as out of order / duplicate ack has been received
