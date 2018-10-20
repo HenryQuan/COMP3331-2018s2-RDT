@@ -206,29 +206,29 @@ def reliable_data_transfer(s, ip, port, gamma, file, segment_size, windows_size,
                     # finally normal
                     s.sendto(pickle.dumps(packet), (ip, port))
                     log('[S] packet sent {0:.2f}% (SEQ {1} - ACK {2})'.format(curr / max * 100, seq, ack))
-                try:
-                    s.settimeout(calc_timeout(gamma))
-                    response, sender = s.recvfrom(1024)
-                    response = pickle.loads(response)
-                    # print(response, check_ack_flag(response), get_ack(response), ack)
-                    if (check_ack_flag(response)):
-                        receiver_ack = get_ack(response)
-                        log('[S] ACK {0} received'.format(receiver_ack))
-                        if (receiver_ack == ack):
-                            # data received
-                            curr = ack
-                            index = get_data_index(curr, segment_size)
-                        else:
-                            # adjust curr and index
-                            curr = receiver_ack
-                            index = get_data_index(curr, segment_size)
-                            # break immediately becaus of error
-                            break
-                    else:
-                        log('[S] Corrupted')
-                except socket.timeout:
-                    log('[S] Timeout')
+                curr += data_len
+                index = get_data_index(curr, segment_size)
             window += 1
+
+        try:
+            response, sender = s.recvfrom(1024)
+            response = pickle.loads(response)
+            # print(response, check_ack_flag(response), get_ack(response), ack)
+            if (check_ack_flag(response)):
+                receiver_ack = get_ack(response)
+                log('[S] ACK {0} received'.format(receiver_ack))
+                if (receiver_ack == ack):
+                    # data received
+                    curr = ack
+                    index = get_data_index(curr, segment_size)
+                else:
+                    # adjust curr and index
+                    curr = receiver_ack
+                    index = get_data_index(curr, segment_size)
+            else:
+                log('[S] Corrupted')
+        except socket.timeout:
+            log('[S] Timeout')
     log('[S] STATISTICS\n', False)
     log('[S] File size: {0}\n'.format(curr), False)
     log('[S] Dropped: {0}\n'.format(dropped), False)

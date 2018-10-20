@@ -49,7 +49,7 @@ def main():
                 print('[R] Reveiver is initialised\n')
 
             # data will be an array (bytes)
-            data, sender = receiver.recvfrom(port)
+            data, sender = receiver.recvfrom(10000)
 
             # deal with different state
             if (STATE == SYSTEM_INIT):
