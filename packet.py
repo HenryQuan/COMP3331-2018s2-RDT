@@ -6,14 +6,14 @@ import hashlib
 
 # index for header
 seq = 0
-ack_num = 1
+ack = 1
 flag = 2
 checksum = 3
 data = 4
 
 # flags, allow multiple mode together
 syn = 0b0001
-ack = 0b0010
+ack_flag = 0b0010
 fin = 0b0100
 data_flag = 0b1000
 
@@ -56,11 +56,11 @@ def check_syn_flag(packet):
 
 def set_ack_flag(packet):
     # set ack flag
-    packet[flag] |= ack
+    packet[flag] |= ack_flag
 
 def check_ack_flag(packet):
     # check for syn flag
-    return packet[flag] & ack == ack
+    return packet[flag] & ack_flag == ack_flag
 
 def set_fin_flag(packet):
     # set ack flag
@@ -85,7 +85,4 @@ def get_checksum(packet):
     return packet[checksum]
 
 def calc_checksum(file):
-    if type(file) is str:
-        return hashlib.md5(file).hexdigest()
-    else:
-        return ''
+    return hashlib.md5(file).hexdigest()

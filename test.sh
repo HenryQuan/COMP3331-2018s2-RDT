@@ -1,9 +1,21 @@
 #!/bin/bash
 
 type=.pdf
+p=0.3
 
-if [ $1 == "s" ]; then
-    py sender.py 127.0.0.1 8080 PDF/Test/test0$type 10 1000 2 0.5 0.1 0.1 0.1 4 0.1 1000 473892
-elif [ $1 == "r" ]; then
-    py receiver.py 8080 test$tpye
+input="PDF/Test/test1$type"
+output="test$type"
+
+if [ $1 == 'diff' ]; then
+    # compare input and output file
+    diff "$input" "$output"
+else
+    # remove log and old output
+    rm "$output"
+    rm "sender.log" "receiver.log"
+    if [ $1 == "s" ]; then
+        py sender.py 127.0.0.1 8080 "$input" 5 8000 2 $p $p $p $p 6 $p 1000 608
+    elif [ $1 == "r" ]; then
+        py receiver.py 8080 "$output"
+    fi
 fi
